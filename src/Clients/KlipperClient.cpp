@@ -49,7 +49,7 @@ void KlipperClient::getPrinterJobResults(PrinterDataStruct *printerData) {
     }
 
     printerData->errorReadCnt = 0;
-    printerData->state = ((*jsonDoc)["result"]["status"]["print_stats"]["state"]).as<int>();
+    printerData->state = KlipperClient::translateState(((*jsonDoc)["result"]["status"]["print_stats"]["state"]).as<String>());
     printerData->filamentLength = ((*jsonDoc)["result"]["status"]["job"]["print_stats"]["filament_used"]).as<float>();
     printerData->progressPrintTime = ((*jsonDoc)["result"]["status"]["print_stats"]["print_duration"]).as<float>();
     MemoryHelper::stringToChar(
