@@ -75,6 +75,7 @@ void OledDisplay::setupFramesForInactiveMode()
     }
     this->ui->setOverlays(this->overlays, 0);
     this->ui->disableAutoTransition();
+    this->numPages = 1;
 
     baseFrameCnt = 0;
     if (this->globalDataController->getWeatherSettings()->show && this->globalDataController->getWeatherSettings()->cityId != 0) {
@@ -89,6 +90,7 @@ void OledDisplay::setupFramesForInactiveMode()
     }
 
     if (baseFrameCnt > 0) {
+        this->numPages = baseFrameCnt;
         this->ui->setFrames(this->baseFrame, baseFrameCnt);
         this->ui->setOverlays(this->overlays, 1);
         if (baseFrameCnt > 1) {
@@ -565,6 +567,19 @@ void OledDisplay::drawInformationHeaderOverlay(OLEDDisplay *display, OLEDDisplay
         display->setTextAlignment(TEXT_ALIGN_LEFT);
         display->drawString(0, 0, displayTime);
     }
+
+    // Draw pages blobs
+    if (this->numPages > 1) {
+        int xPos = 110 - (this->numPages * 6);
+        for(int i=0; i<this->numPages; i++) {
+            display->drawCircle(xPos, 5, 2);
+            if (i == state->currentFrame) {
+                display->drawCircle(xPos, 5, 1);
+            }
+            xPos += 6;
+        }
+    }
+
     display->drawHorizontalLine(0, 11, 128);
     this->drawRssi(display);
 }

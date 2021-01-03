@@ -14,6 +14,7 @@ private:
     DebugController *debugController;
     OLEDDisplay *oledDisplay;
     OLEDDisplayUi *ui;
+    int numPages = 0;
     boolean displayOn = true;
     long displayOffEpoch = 0;
     bool inTransition = false;
