@@ -216,6 +216,7 @@ void WebServer::handleUpdatePrinter() {
     // Save
     this->globalDataController->getSystemSettings()->lastOk = FPSTR(OK_MESSAGES_SAVE1);
     this->globalDataController->writeSettings();
+    this->globalDataController->getDisplayClient()->postSetup(true);
     this->redirectTarget("/configureprinter/show");
 }
 
@@ -228,6 +229,7 @@ void WebServer::handleDeletePrinter() {
         this->globalDataController->getSystemSettings()->lastOk = FPSTR(OK_MESSAGES_DELETEPRINTER);
         this->globalDataController->getSystemSettings()->lastError = "";
         this->globalDataController->writeSettings();
+        this->globalDataController->getDisplayClient()->postSetup(true);
     } else {
         this->globalDataController->getSystemSettings()->lastError = FPSTR(ERROR_MESSAGES_ERR2);
     }    
@@ -270,6 +272,9 @@ void WebServer::handleUpdateStation() {
     systemSettings->webserverPassword = this->server->arg("stationpassword");
     systemSettings->webserverUsername = this->server->arg("userid");
     this->globalDataController->writeSettings();
+    this->globalDataController->getTimeClient()->setUtcOffset(clockSettings->utcOffset);
+    this->globalDataController->getTimeClient()->resetLastEpoch();
+    this->globalDataController->getDisplayClient()->postSetup(true);
     this->findMDNS();
 
     if (systemSettings->invertDisplay != flipOld) {
@@ -307,6 +312,10 @@ void WebServer::handleUpdateWeather() {
     weatherSettings->isMetric = this->server->hasArg("metric");
     weatherSettings->lang = this->server->arg("language");
     this->globalDataController->writeSettings();
+    this->globalDataController->getWeatherClient()->updateWeatherApiKey(weatherSettings->apiKey);
+    this->globalDataController->getWeatherClient()->updateLanguage(weatherSettings->lang);
+    this->globalDataController->getWeatherClient()->setMetric(weatherSettings->isMetric);
+    this->globalDataController->getWeatherClient()->updateCityId(weatherSettings->cityId);
     this->globalDataController->getSystemSettings()->lastOk = FPSTR(OK_MESSAGES_SAVE2);
     this->redirectHome();
 }

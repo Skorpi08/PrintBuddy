@@ -170,3 +170,12 @@
 #define ENABLE_OTA          true
 // Set an OTA password here -- leave blank if you don't want to be prompted for password
 #define OTA_Password        ""
+
+
+
+
+
+//===========================================================================
+//=============================== DEBUG =====================================
+//===========================================================================
+//#define SIMULATE_CLIENTS_PRINTING                       // Simulate all clients printing

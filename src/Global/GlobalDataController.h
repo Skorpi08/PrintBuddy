@@ -86,6 +86,7 @@ public:
     PrinterDataStruct *addPrinterSetting();
     bool removePrinterSettingByIdx(int idx);
     bool isAnyPrinterPrinting();
+    int numPrintersPrinting();
     int getNumPrinters();
     String getPrinterStateAsText(PrinterDataStruct *printerHandle);
     String getPrinterClientType(PrinterDataStruct *printerHandle);

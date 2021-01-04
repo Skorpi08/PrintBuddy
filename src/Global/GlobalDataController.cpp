@@ -19,6 +19,15 @@ GlobalDataController::GlobalDataController(TimeClient *timeClient, OpenWeatherMa
 void GlobalDataController::setup() {
     this->listSettingFiles();
     this->readSettings();
+
+    // Trigger updates!
+    this->weatherClient->updateWeatherApiKey(this->weatherData.apiKey);
+    this->weatherClient->updateLanguage(this->weatherData.lang);
+    this->weatherClient->setMetric(this->weatherData.isMetric);
+    this->weatherClient->updateCityId(this->weatherData.cityId);
+    this->timeClient->setUtcOffset(this->clockData.utcOffset);
+    this->timeClient->resetLastEpoch();
+    this->baseDisplayClient->postSetup(true);
 }
 
 /**
@@ -106,16 +115,6 @@ void GlobalDataController::readSettings() {
     for(int i=0; i<this->printersCnt; i++) {
         BasePrinterClient::resetPrinterData(&this->printers[i]);
     }
-
-    // Trigger updates!
-    this->weatherClient->updateWeatherApiKey(this->weatherData.apiKey);
-    this->weatherClient->updateLanguage(this->weatherData.lang);
-    this->weatherClient->setMetric(this->weatherData.isMetric);
-    this->weatherClient->updateCityId(this->weatherData.cityId);
-    this->timeClient->setUtcOffset(this->clockData.utcOffset);
-    this->timeClient->resetLastEpoch();
-    this->baseDisplayClient->postSetup(true);
-    //this->baseDisplayClient->handleUpdate();
 }
 
 /**
@@ -672,10 +671,19 @@ void GlobalDataController::syncPrinter(PrinterDataStruct *printerHandle) {
  * @return false        No printer currently printing
  */
 bool GlobalDataController::isAnyPrinterPrinting() {
+    return this->numPrintersPrinting() > 0;
+}
+
+/**
+ * @brief Return number of printing printers
+ * @return int
+ */
+int GlobalDataController::numPrintersPrinting() {
+    int numPrintersPrinting = 0;
     for(int i=0; i<this->getNumPrinters(); i++) {
         if (this->printers[i].isPrinting) {
-            return true;
+            numPrintersPrinting++;
         }
     }
-    return false;
+    return numPrintersPrinting;
 }

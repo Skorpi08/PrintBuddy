@@ -18,10 +18,32 @@ DuetClient::DuetClient(GlobalDataController *globalDataController, DebugControll
  * @param printerData       Handle to printer struct
  */
 void DuetClient::getPrinterJobResults(PrinterDataStruct *printerData) {
-    JsonDocument *jsonDoc;
     if (!this->isValidConfig(printerData)) {
         return;
     }
+
+#ifdef SIMULATE_CLIENTS_PRINTING
+    // Simulate printing
+    printerData->state = PRINTER_STATE_PRINTING;
+    printerData->filamentLength = 20;
+    printerData->progressPrintTime = 1039;
+    MemoryHelper::stringToChar(
+        "test.gcode",
+        printerData->fileName,
+        60
+    );
+    printerData->isPrinting = true;
+    printerData->toolTemp = 225;
+    printerData->toolTargetTemp = 230;
+    printerData->bedTemp = 79;
+    printerData->bedTargetTemp = 80;
+    printerData->progressFilepos = 20;
+    printerData->estimatedPrintTime = 5005;
+    printerData->progressPrintTimeLeft = 4000;
+    printerData->progressCompletion = 20;
+    return;
+#else
+    JsonDocument *jsonDoc;
 
     // Req 1 -> We need to trigger the api to response data!
     this->debugController->printLn("Get Duet Data: " + String(printerData->remoteAddress) + ":" + String(printerData->remotePort));
@@ -134,6 +156,7 @@ void DuetClient::getPrinterJobResults(PrinterDataStruct *printerData) {
             + String(printerData->progressCompletion) + "%)"
         );
     }
+#endif
 }
 
 /**

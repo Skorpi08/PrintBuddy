@@ -22,11 +22,16 @@ private:
 
     OverlayCallback overlays[1];
     FrameCallback baseFrame[2];
+    FrameCallback frames[MAX_PRINTERS];
+    int frameToPrinterHandle[MAX_PRINTERS];
+    int frameToPrinterHandleOffset = 0;
+    int numPrintersPrinting = 0;
+    int lastFixedFrame = -1;
     int baseFrameCnt = 0;
 
 
 
-    FrameCallback frames[3];
+    
     
     boolean isClockOn = false;
     
@@ -46,16 +51,13 @@ public:
 
     void checkDisplay();
     void enableDisplay(boolean enable);
-    void drawScreen1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
-    void drawScreen2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
-    void drawScreen3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
     void drawClock(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
     
-    void drawHeaderOverlay(OLEDDisplay *display, OLEDDisplayUiState* state);
-    void drawClockHeaderOverlay(OLEDDisplay *display, OLEDDisplayUiState* state);
+
     void drawRssi(OLEDDisplay *display);
 
 
+    void drawPrinterState(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
     void drawWeatherOutdoor(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
     void drawWeatherIndoor(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
     void drawInformationHeaderOverlay(OLEDDisplay *display, OLEDDisplayUiState* state);

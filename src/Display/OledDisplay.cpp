@@ -44,8 +44,6 @@ void OledDisplay::postSetup(bool isConfigChange) {
         this->ui->setFrameAnimation(SLIDE_LEFT);
         this->ui->setTargetFPS(30);
         this->ui->disableAllIndicators();
-        this->ui->setFrames(frames, (3));
-        this->ui->setOverlays(overlays, 1);
         this->ui->enableAutoTransition();
 
         if (this->globalDataController->getSystemSettings()->invertDisplay) {
@@ -103,24 +101,30 @@ void OledDisplay::setupFramesForInactiveMode()
  * @brief Setup frames for active mode
  */
 void OledDisplay::setupFramesForActiveMode() {
-    //this->ui->setFrames(this->frames, 3);
-    this->ui->setOverlays(this->overlays, 1);
+    this->debugController->printLn("Setup active mode");
+    this->ui->disableAutoTransition();
+    static OledDisplay* obj = this;
+    int frameCnt = 0;
+    PrinterDataStruct *printerClientSettings = this->globalDataController->getPrinterSettings();
 
+    for(int i=0; i<this->globalDataController->getNumPrinters(); i++) {
+        if (printerClientSettings[i].isPrinting) {
+            this->frameToPrinterHandle[frameCnt] = i;
+            this->frames[frameCnt] = [](OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) { obj->drawPrinterState(display, state, x, y); };
+            frameCnt++;
+        }
+    }
 
-    
-
-
-
-
-    /*this->frames[0] = [](OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) { obj->drawScreen1(display, state, x, y); };
-    this->frames[1] = [](OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) { obj->drawScreen2(display, state, x, y); };
-    this->frames[2] = [](OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) { obj->drawScreen3(display, state, x, y); };
-    
-    this->clockOverlay[0] = [](OLEDDisplay *display, OLEDDisplayUiState* state) { obj->drawClockHeaderOverlay(display, state); };
-        */
-
-
-
+    if (frameCnt > 0) {
+        this->numPages = frameCnt;
+        this->ui->setFrames(this->frames, frameCnt);
+        this->ui->setOverlays(this->overlays, 1);
+        if (frameCnt > 1) {
+            this->ui->enableAutoTransition();
+        }
+    } else {
+        this->setupFramesForInactiveMode();
+    }
 }
 
 /**
@@ -237,11 +241,14 @@ void OledDisplay::checkDisplay() {
         this->enableDisplay(false);
         this->debugController->printLn("Printer is offline going down to sleep...");
         return;
-
-    // 
-    } else if (!this->displayOn && !this->globalDataController->getClockSettings()->show) {
-        /*
-        if (printerClient->isOperational()) {
+        
+    // Show clock, weather, printer states
+    } else if (this->globalDataController->isAnyPrinterPrinting() ||
+        this->globalDataController->getClockSettings()->show
+        || this->globalDataController->getWeatherSettings()->show
+        || (this->globalDataController->getSensorSettings()->showOnDisplay && this->globalDataController->getSensorSettings()->activated)
+    ) {
+        if (!this->displayOn && this->globalDataController->isAnyPrinterPrinting()) {
             // Wake the Screen up
             this->enableDisplay(true);
             this->oledDisplay->clear();
@@ -254,21 +261,18 @@ void OledDisplay::checkDisplay() {
             this->debugController->printLn("Printer is online waking up...");
             delay(5000);
             return;
-        } */
+        }
 
-    // Show clock and weather
-    } else if (this->globalDataController->getClockSettings()->show
-        || this->globalDataController->getWeatherSettings()->show
-        || (this->globalDataController->getSensorSettings()->showOnDisplay && this->globalDataController->getSensorSettings()->activated)
-    ) {
         if (!this->globalDataController->isAnyPrinterPrinting() && !this->isClockOn) {
             this->debugController->printLn("PrintBuddy is inactive.");
             this->setupFramesForInactiveMode();
             this->isClockOn = true;
-        } else if (this->globalDataController->isAnyPrinterPrinting() && this->isClockOn) {
+        } else if (this->globalDataController->isAnyPrinterPrinting()
+            && (this->isClockOn || (this->numPrintersPrinting != this->globalDataController->numPrintersPrinting()) )) {
             this->debugController->printLn("PrintBuddy is active.");
             this->setupFramesForActiveMode();
-            isClockOn = false;
+            this->numPrintersPrinting = this->globalDataController->numPrintersPrinting();
+            this->isClockOn = false;
         }
     }
 }
@@ -295,178 +299,101 @@ void OledDisplay::enableDisplay(boolean enable) {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void OledDisplay::drawScreen1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-    //BasePrinterClient *printerClient = this->globalDataController->getPrinterClient();
-
-    //String bed = printerClient->getValueRounded(printerClient->getTempBedActual());
-    //String tool = printerClient->getValueRounded(printerClient->getTempToolActual());
-    display->setTextAlignment(TEXT_ALIGN_CENTER);
-    display->setFont(ArialMT_Plain_16);
-    /*if (bed != "0") {
-        display->drawString(29 + x, 0 + y, "Tool");
-        display->drawString(89 + x, 0 + y, "Bed");
-    } else {
-        display->drawString(64 + x, 0 + y, "Tool Temp");
+/**
+ * @brief Draw printer frame
+ * 
+ * @param display 
+ * @param state 
+ * @param x 
+ * @param y 
+ */
+void OledDisplay::drawPrinterState(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+    // Select the correct printer for this frame
+    if (this->lastFixedFrame < 0) {
+        this->lastFixedFrame = state->currentFrame;
     }
+    PrinterDataStruct refPrinter = this->globalDataController->getPrinterSettings()[this->frameToPrinterHandle[state->currentFrame - this->frameToPrinterHandleOffset]];
+    if ((x > 0) && (state->frameState == FrameState::IN_TRANSITION)) {
+        int nextFrame = state->currentFrame + 1;
+        if ((this->numPrintersPrinting + this->frameToPrinterHandleOffset) <= nextFrame) {
+            nextFrame = 0;
+        }
+        if (nextFrame >= this->frameToPrinterHandleOffset) {
+            refPrinter = this->globalDataController->getPrinterSettings()[this->frameToPrinterHandle[nextFrame - this->frameToPrinterHandleOffset]];
+        }
+    }
+
+    // Draw printer state data
     display->setTextAlignment(TEXT_ALIGN_LEFT);
+    display->setFont(ArialMT_Plain_10);
+    display->drawString(x, 13 + y, String(refPrinter.customName));
+
+    // State
+    int yPos = 24 + y;
+    display->setTextAlignment(TEXT_ALIGN_RIGHT);
     display->setFont(ArialMT_Plain_24);
-    if (bed != "0") {
-        display->setTextAlignment(TEXT_ALIGN_LEFT);
-        display->drawString(12 + x, 14 + y, tool + "°");
-        display->drawString(74 + x, 14 + y, bed + "°");
-    } else {
-        display->setTextAlignment(TEXT_ALIGN_CENTER);
-        display->drawString(64 + x, 14 + y, tool + "°");
-    }*/
-}
+    int progressPercent = refPrinter.progressCompletion;
+    if (progressPercent > 99) {
+        progressPercent = 99;
+    }
+    display->drawString(display->width() + x, yPos, String(progressPercent) + "%");
 
-void OledDisplay::drawScreen2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-    //BasePrinterClient *printerClient = this->globalDataController->getPrinterClient();
+    // Time
+    display->setFont(ArialMT_Plain_10);
+    display->setTextAlignment(TEXT_ALIGN_LEFT);
 
-    display->setTextAlignment(TEXT_ALIGN_CENTER);
-    display->setFont(ArialMT_Plain_16);
-
-    display->drawString(64 + x, 0 + y, "Time Remaining");
-    //display->setTextAlignment(TEXT_ALIGN_LEFT);
-    display->setFont(ArialMT_Plain_24);
-    /*int val = printerClient->getProgressPrintTimeLeft().toInt();
+    int val = refPrinter.progressPrintTimeLeft;
     int hours = this->globalDataController->numberOfHours(val);
     int minutes = this->globalDataController->numberOfMinutes(val);
     int seconds = this->globalDataController->numberOfSeconds(val);
-
-    String time = this->globalDataController->zeroPad(hours) + ":" + 
+    String timeLeft = this->globalDataController->zeroPad(hours) + ":" + 
         this->globalDataController->zeroPad(minutes) + ":" + 
         this->globalDataController->zeroPad(seconds);
-    display->drawString(64 + x, 14 + y, time); */
-}
-
-void OledDisplay::drawScreen3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-    /*BasePrinterClient *printerClient = this->globalDataController->getPrinterClient();
-
-    display->setTextAlignment(TEXT_ALIGN_CENTER);
-    display->setFont(ArialMT_Plain_16);
-
-    display->drawString(64 + x, 0 + y, "Printing Time");
-    //display->setTextAlignment(TEXT_ALIGN_LEFT);
-    display->setFont(ArialMT_Plain_24);
-    int val = printerClient->getProgressPrintTime().toInt();
-    int hours = this->globalDataController->numberOfHours(val);
-    int minutes = this->globalDataController->numberOfMinutes(val);
-    int seconds = this->globalDataController->numberOfSeconds(val);
-
-    String time = this->globalDataController->zeroPad(hours) + ":" + 
+    val = refPrinter.progressPrintTime;
+    hours = this->globalDataController->numberOfHours(val);
+    minutes = this->globalDataController->numberOfMinutes(val);
+    seconds = this->globalDataController->numberOfSeconds(val);
+    String timePrint = this->globalDataController->zeroPad(hours) + ":" + 
         this->globalDataController->zeroPad(minutes) + ":" + 
         this->globalDataController->zeroPad(seconds);
-    display->drawString(64 + x, 14 + y, time); */
-}
 
+    display->drawString(x, yPos, "D: " + timePrint);
+    display->drawString(x, yPos + 11, "L: " + timeLeft);
 
+    // Temps
+    int blockWidth = display->width() / 2;
+    int tOff = 10;
+    int splitBlock = (blockWidth - tOff) / 2;
+    yPos = display->height() - 12 + y;
+    display->setFont(ArialMT_Plain_10);
+    display->setTextAlignment(TEXT_ALIGN_RIGHT);
+    display->drawRect(x, yPos, blockWidth, 12);
+    display->drawRect(x + blockWidth, yPos, blockWidth, 12);
 
-
-
-
-void OledDisplay::drawHeaderOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
-    TimeClient * timeClient = this->globalDataController->getTimeClient();
-    //BasePrinterClient *printerClient = this->globalDataController->getPrinterClient();
-
-    display->setColor(WHITE);
-    display->setFont(ArialMT_Plain_16);
-    String displayTime = timeClient->getAmPmHours() + ":" + timeClient->getMinutes();
-    if (this->globalDataController->getClockSettings()->is24h) {
-        displayTime = timeClient->getHours() + ":" + timeClient->getMinutes();
-    }
-    display->setTextAlignment(TEXT_ALIGN_LEFT);
-    display->drawString(0, 48, displayTime);
-  
-    if (!this->globalDataController->getClockSettings()->is24h) {
-        String ampm = timeClient->getAmPm();
-        display->setFont(ArialMT_Plain_10);
-        display->drawString(39, 54, ampm);
+    display->fillRect(x, yPos, tOff, 12);
+    display->fillRect(x + splitBlock + tOff, yPos, splitBlock, 12);    
+    display->drawString(x + splitBlock + tOff - 2, yPos - 1, String(refPrinter.toolTemp, 0));
+    if (refPrinter.bedTemp != 0) {
+        display->fillRect(x + blockWidth, yPos, tOff, 12);
+        display->fillRect(x + blockWidth + splitBlock + tOff, yPos, splitBlock, 12);
+        display->drawString(x + blockWidth + splitBlock + tOff - 2, yPos - 1, String(refPrinter.bedTemp, 0));
     }
 
-    display->setFont(ArialMT_Plain_16);
+    display->setColor(OLEDDISPLAY_COLOR::BLACK);
     display->setTextAlignment(TEXT_ALIGN_LEFT);
-    //String percent = String(printerClient->getProgressCompletion()) + "%";
-    //display->drawString(64, 48, percent);
-    
-    // Draw indicator to show next update
-    //int updatePos = (printerClient->getProgressCompletion().toFloat() / float(100)) * 128;
-    display->drawRect(0, 41, 128, 6);
-    //display->drawHorizontalLine(0, 42, updatePos);
-    //display->drawHorizontalLine(0, 43, updatePos);
-    //display->drawHorizontalLine(0, 44, updatePos);
-    //display->drawHorizontalLine(0, 45, updatePos);
-    
-    this->drawRssi(display);
-}
-
-void OledDisplay::drawClockHeaderOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
-
-    TimeClient * timeClient = this->globalDataController->getTimeClient();
-    //BasePrinterClient *printerClient = this->globalDataController->getPrinterClient();
-
-    display->setColor(WHITE);
-    display->setFont(ArialMT_Plain_16);
-    display->setTextAlignment(TEXT_ALIGN_LEFT);
-    int printerStateDrawXPos = 0;
-    if (!this->globalDataController->getClockSettings()->is24h) {
-        display->drawString(0, 48, timeClient->getAmPm());
-        display->setTextAlignment(TEXT_ALIGN_CENTER);
-        printerStateDrawXPos = 64;
+    display->drawString(x + splitBlock + tOff + 2, yPos - 1, String(refPrinter.toolTargetTemp, 0));
+    display->drawString(x + 2, yPos - 1, "T");
+    if (refPrinter.bedTemp != 0) {
+        display->drawString(x + blockWidth + splitBlock + tOff + 2, yPos - 1, String(refPrinter.bedTargetTemp, 0));
+        display->drawString(x + blockWidth + 2, yPos - 1, "B");
     }
-    /*if (printerClient->isPSUoff()) {
-        display->drawString(printerStateDrawXPos, 47, "psu off");
-    } else if (printerClient->getState() != PRINTER_STATE_OFFLINE) {
-        display->drawString(printerStateDrawXPos, 47, "online");
-    } else {
-        display->drawString(printerStateDrawXPos, 47, "offline");
-    }*/
-    display->setTextAlignment(TEXT_ALIGN_LEFT);
-    display->drawRect(0, 43, 128, 2);
-    
-    this->drawRssi(display);
+
+    // Split blocks!
+    display->fillRect(x + blockWidth - 1, yPos, 2, 12);
+
+    // Reset settings!
+    display->setColor(OLEDDISPLAY_COLOR::WHITE);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**
  * @brief Draw clock frame (if we only show clock in pause mode)
@@ -572,9 +499,10 @@ void OledDisplay::drawInformationHeaderOverlay(OLEDDisplay *display, OLEDDisplay
     if (this->numPages > 1) {
         int xPos = 110 - (this->numPages * 6);
         for(int i=0; i<this->numPages; i++) {
-            display->drawCircle(xPos, 5, 2);
             if (i == state->currentFrame) {
-                display->drawCircle(xPos, 5, 1);
+                display->fillCircle(xPos, 5, 2);
+            } else {
+                display->drawCircle(xPos, 5, 2);
             }
             xPos += 6;
         }
