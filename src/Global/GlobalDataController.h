@@ -22,6 +22,8 @@ static const char OK_MESSAGES_SAVE1[] PROGMEM = "[OK] Printer successfully saved
 static const char OK_MESSAGES_SAVE2[] PROGMEM = "[OK] Weather api data successfully saved";
 static const char OK_MESSAGES_SAVE3[] PROGMEM = "[OK] Station data successfully saved";
 static const char OK_MESSAGES_SAVE4[] PROGMEM = "[OK] Sensor data successfully saved";
+static const char OK_MESSAGES_SAVE5[] PROGMEM = "[OK] Display data successfully saved";
+static const char OK_MESSAGES_SAVE6[] PROGMEM = "[OK] Display data successfully saved! Please reboot device!";
 static const char OK_MESSAGES_DELETEPRINTER[] PROGMEM = "[OK] Printer successfully removed";
 
 /**
@@ -36,11 +38,12 @@ private:
     TimeClient *timeClient;
     OpenWeatherMapClient *weatherClient; 
     DebugController *debugController;
-    BaseDisplayClient *baseDisplayClient;
+    BaseDisplayClient **baseDisplayClient;
     BasePrinterClient **basePrinterClients;
     BaseSensorClient **baseSensorClients;
     int basePrinterCount = 0;
     int baseSensorCount = 0;
+    int baseDisplayCount = 0;
     int sensorApiStarted = -1;
 
     /**
@@ -52,7 +55,7 @@ private:
     ClockDataStruct clockData;
     WeatherDataStruct weatherData;
     SensorDataStruct sensorData;
-    
+    DisplayDataStruct displayData;
 
 public:
     GlobalDataController(TimeClient *timeClient, OpenWeatherMapClient *weatherClient, DebugController *debugController);
@@ -66,11 +69,15 @@ public:
     SensorDataStruct *getSensorSettings();
     TimeClient *getTimeClient();
     OpenWeatherMapClient *getWeatherClient();
-    BaseDisplayClient *getDisplayClient();
-    void setDisplayClient(BaseDisplayClient *baseDisplayClient);
     void ledOnOff(boolean value);
     void flashLED(int number, int delayTime);
     bool resetConfig();
+
+    void registerDisplayClient(int id, BaseDisplayClient *baseDisplayClient);
+    BaseDisplayClient** getRegisteredDisplayClients();
+    int getRegisteredDisplayClientsNum();
+    void syncDisplay();
+    BaseDisplayClient *getDisplayClient();
 
     void registerSensorClient(int id, BaseSensorClient *baseSensorClient, TwoWire *i2cInterface, SPIClass *spiInterface, uint8_t spiCsPin, uint8_t oneWirePin);
     BaseSensorClient** getRegisteredSensorClients();
@@ -78,6 +85,7 @@ public:
     String getSensorClientType(SensorDataStruct *sensorHandle);
     void syncSensor();
     BaseSensorClient *getSensorClient(SensorDataStruct *sensorHandle);
+    DisplayDataStruct *getDisplaySettings();
 
     void registerPrinterClient(int id, BasePrinterClient *basePrinterClient);
     BasePrinterClient** getRegisteredPrinterClients();

@@ -5,9 +5,7 @@
 #include "Global/GlobalDataController.h"
 #include "Global/DebugController.h"
 #include "Configuration.h"
-#if WEBSERVER_ENABLED
-    #include "Network/WebServer.h"
-#endif
+#include "Network/WebServer.h"
 #include "Network/TimeClient.h"
 #include "Network/OpenWeatherMapClient.h"
 #include "Network/JsonRequestClient.h"
@@ -26,13 +24,10 @@
 #include "Sensors/DHT21Wire.h"
 #include "Sensors/DHT22Wire.h"
 
-#ifdef USE_NEXTION_DISPLAY
-    #include "Display/NextionDisplay.h"
-#else
-    #include <SSD1306Wire.h>
-    #include <SH1106Wire.h>
-    #include "Display/OledDisplay.h"
-#endif
+#include "Display/NextionDisplay.h"
+#include <SSD1306Wire.h>
+#include <SH1106Wire.h>
+#include "Display/OledDisplay.h"
 
 // Initilize all needed data
 DebugController debugController(DEBUG_MODE_ENABLE);
@@ -63,14 +58,9 @@ DHT22Wire sensorClient8(&globalDataController, &debugController, &jsonRequestCli
 TwoWire *i2cInterface = &Wire;
 
 // Construct correct display client
-#ifdef USE_NEXTION_DISPLAY
-    SoftwareSerial displaySerialPort(DISPLAY_RX_PIN, DISPLAY_TX_PIN);
-    NextionDisplay displayClient(&displaySerialPort, &globalDataController, &debugController);
-#else
-    #if DISPLAY_SH1106
-        SH1106Wire  display(DISPLAY_I2C_DISPLAY_ADDRESS, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
-    #else
-        SSD1306Wire display(DISPLAY_I2C_DISPLAY_ADDRESS, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
-    #endif
-    OledDisplay displayClient(&display, &globalDataController, &debugController);
-#endif
+SoftwareSerial displaySerialPort(DISPLAY_RX_PIN, DISPLAY_TX_PIN);
+SH1106Wire  displaySH1106(DISPLAY_I2C_DISPLAY_ADDRESS, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
+SSD1306Wire displaySSD1306(DISPLAY_I2C_DISPLAY_ADDRESS, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
+NextionDisplay displayClient1(&displaySerialPort, &globalDataController, &debugController);
+OledDisplay displayClient2("OLED SH1106", &displaySH1106, &globalDataController, &debugController);
+OledDisplay displayClient3("OLED SSD1306", &displaySSD1306, &globalDataController, &debugController);

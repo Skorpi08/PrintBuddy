@@ -29,6 +29,7 @@ public:
     
     
     void setUtcOffset(float utcOffset);
+    int getHoursNumber();
     String getHours();
     String getAmPmHours();
     String getAmPm();

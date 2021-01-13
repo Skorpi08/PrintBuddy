@@ -10,6 +10,7 @@ GlobalDataController::GlobalDataController(TimeClient *timeClient, OpenWeatherMa
      this->printers = (PrinterDataStruct *)malloc(1 * sizeof(PrinterDataStruct));
      this->basePrinterClients = (BasePrinterClient**)malloc(1 * sizeof(int));
      this->baseSensorClients = (BaseSensorClient**)malloc(1 * sizeof(int));
+     this->baseDisplayClient = (BaseDisplayClient**)malloc(1 * sizeof(int));
      this->initDefaultConfig();
 }
 
@@ -27,7 +28,7 @@ void GlobalDataController::setup() {
     this->weatherClient->updateCityId(this->weatherData.cityId);
     this->timeClient->setUtcOffset(this->clockData.utcOffset);
     this->timeClient->resetLastEpoch();
-    this->baseDisplayClient->postSetup(true);
+    this->getDisplayClient()->postSetup(true);
 }
 
 /**
@@ -63,7 +64,13 @@ void GlobalDataController::readSettings() {
     while(fr.available()) {
         line = fr.readStringUntil('\n');
         this->readSettingsForInt(line, "printerCnt", &this->printersCnt);
-        this->readSettingsForBool(line, "systemInvertDisplay", &this->systemData.invertDisplay);
+        this->readSettingsForBool(line, "systemInvertDisplay", &this->displayData.invertDisplay);
+        this->readSettingsForInt(line, "displayType", &this->displayData.displayType);
+        this->readSettingsForBool(line, "displayWeatherSplit", &this->displayData.showWeatherSensorSplited);
+        this->readSettingsForInt(line, "displaySwitchDelay", &this->displayData.automaticSwitchDelay);
+        this->readSettingsForBool(line, "displaySwitchEnab", &this->displayData.automaticSwitchEnabled);
+        this->readSettingsForBool(line, "displaySwitchActiv", &this->displayData.automaticSwitchActiveOnlyEnabled);
+        this->readSettingsForInt(line, "displayInactiveOff", &this->displayData.automaticInactiveOff);
         this->readSettingsForBool(line, "systemHasBasicAuth", &this->systemData.hasBasicAuth);
         this->readSettingsForString(line, "systemWebserverUsername", &this->systemData.webserverUsername);
         this->readSettingsForString(line, "systemWebserverPassword", &this->systemData.webserverPassword);
@@ -203,7 +210,13 @@ void GlobalDataController::writeSettings() {
     } else {
         this->debugController->printLn("Saving default settings now...");
         f.println("printerCnt=" + String(this->printersCnt));
-        f.println("systemInvertDisplay=" + String(this->systemData.invertDisplay));
+        f.println("systemInvertDisplay=" + String(this->displayData.invertDisplay));
+        f.println("displayType=" + String(this->displayData.displayType));
+        f.println("displayWeatherSplit=" + String(this->displayData.showWeatherSensorSplited));
+        f.println("displaySwitchDelay=" + String(this->displayData.automaticSwitchDelay));
+        f.println("displaySwitchEnab=" + String(this->displayData.automaticSwitchEnabled));
+        f.println("displaySwitchActiv=" + String(this->displayData.automaticSwitchActiveOnlyEnabled));
+        f.println("displayInactiveOff=" + String(this->displayData.automaticInactiveOff));
         f.println("systemHasBasicAuth=" + String(this->systemData.hasBasicAuth));
         f.println("systemWebserverUsername=" + this->systemData.webserverUsername);
         f.println("systemWebserverPassword=" + this->systemData.webserverPassword);
@@ -255,11 +268,18 @@ void GlobalDataController::writeSettings() {
 void GlobalDataController::initDefaultConfig() {
     this->systemData.clockWeatherResyncMinutes = TIME_RESYNC_MINUTES_DELAY;
     this->systemData.hasBasicAuth = WEBSERVER_IS_BASIC_AUTH;
+    this->displayData.displayType = 0;
 #ifdef DISPLAY_INVERT_DISPLAY
-    this->systemData.invertDisplay = DISPLAY_INVERT_DISPLAY;
+    this->displayData.invertDisplay = DISPLAY_INVERT_DISPLAY;
 #else
-    this->systemData.invertDisplay = false;
+    this->displayData.invertDisplay = false;
 #endif
+    this->displayData.showWeatherSensorSplited = 0;
+    this->displayData.automaticSwitchDelay = 5000;
+    this->displayData.automaticSwitchEnabled = 1;
+    this->displayData.automaticSwitchActiveOnlyEnabled = 1;
+    this->displayData.automaticInactiveOff = 10;
+
     this->systemData.useLedFlash = USE_FLASH;
     this->systemData.lastError = "";
     this->systemData.version = VERSION;
@@ -335,24 +355,6 @@ void GlobalDataController::flashLED(int number, int delayTime) {
         digitalWrite(EXTERNAL_LED, HIGH); // OFF
         delay(delayTime);
     }
-}
-
-/**
- * @brief Set handle to display
- * 
- * @param baseDisplayClient 
- */
-void GlobalDataController::setDisplayClient(BaseDisplayClient *baseDisplayClient) {
-    this->baseDisplayClient = baseDisplayClient;
-}
-
-/**
- * @brief Return handle to current display
- * 
- * @return BaseDisplayClient* 
- */
-BaseDisplayClient *GlobalDataController::getDisplayClient() {
-    return this->baseDisplayClient;
 }
 
 /**
@@ -473,6 +475,65 @@ String GlobalDataController::getPrinterStateAsText(PrinterDataStruct *printerHan
     default:
         return "Offline";
     }
+}
+
+/**
+ * @brief Register an new display client
+ * 
+ * @param id                    Type ID
+ * @param baseDisplayClient     Client
+ */
+void GlobalDataController::registerDisplayClient(int id, BaseDisplayClient *baseDisplayClient) {
+    if (this->baseDisplayCount < (id + 1)) {
+        BaseDisplayClient** newSet = (BaseDisplayClient**)malloc((id + 1) * sizeof(BaseDisplayClient*));
+        memset(newSet, 0, (id + 1) * sizeof(BaseSensorClient*));
+        for (int i=0; i<this->baseDisplayCount; i++) {
+            newSet[i] = this->baseDisplayClient[i];
+        }
+        free(this->baseDisplayClient);
+        this->baseDisplayClient = newSet;
+        this->baseDisplayCount = id + 1;
+    }
+    this->baseDisplayClient[id] = baseDisplayClient;
+}
+
+/**
+ * @brief Return all available display clients
+ * @return BaseDisplayClient** 
+ */
+BaseDisplayClient** GlobalDataController::getRegisteredDisplayClients() {
+    return this->baseDisplayClient;
+}
+
+/**
+ * @brief Retrun number of registred display clients
+ * @return int 
+ */
+int GlobalDataController::getRegisteredDisplayClientsNum() {
+    return this->baseDisplayCount;
+}
+
+/**
+ * @brief Retrun the current selected display client
+ * @return BaseDisplayClient* 
+ */
+BaseDisplayClient *GlobalDataController::getDisplayClient() {
+    return this->baseDisplayClient[this->displayData.displayType];
+}
+
+/**
+ * @brief Syncronise selected display
+ */
+void GlobalDataController::syncDisplay() {
+    this->getDisplayClient()->handleUpdate();
+}
+
+/**
+ * @brief Return configuration for display
+ * @return DisplayDataStruct* 
+ */
+DisplayDataStruct *GlobalDataController::getDisplaySettings() {
+    return &this->displayData;
 }
 
 /**

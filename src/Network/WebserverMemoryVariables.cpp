@@ -467,6 +467,112 @@ void WebserverMemoryVariables::sendSensorConfigForm(ESP8266WebServer *server, Gl
 }
 
 /**
+ * @brief Send out configuration for display
+ * @param server                    Send out instancce
+ * @param globalDataController      Access to global data
+ */
+void WebserverMemoryVariables::sendDisplayConfigForm(ESP8266WebServer *server, GlobalDataController *globalDataController) {
+    server->sendContent(FPSTR(DISPLAY_CONFIG_FORM_START));
+
+    String optionData = "";
+    BaseDisplayClient** displayInstances = globalDataController->getRegisteredDisplayClients();
+    for (int i=0; i<globalDataController->getRegisteredDisplayClientsNum(); i++) {
+        if (displayInstances[i] == NULL) {
+            continue;
+        }
+        optionData += "<option class='bx--select-option' value='" + String(i) + "'";
+        if (i == globalDataController->getDisplaySettings()->displayType) {
+            optionData += " selected";
+        }
+        optionData += ">" + displayInstances[i]->getType() + "</option>";
+    } 
+
+    WebserverMemoryVariables::sendFormSelect(
+        server,
+        FPSTR(DISPLAY_CONFIG_FORM1_ID),
+        FPSTR(DISPLAY_CONFIG_FORM1_LABEL),
+        "",
+        "onchange=\"if(this.selectedIndex != undefined){var e=document.getElementById('" + String(FPSTR(DISPLAY_CONFIG_FORM1_ID)) + "');var val=e.value;if(val==0){showhideDir('oled',false);showhideDir('nextion',true);}else{showhideDir('oled',true);showhideDir('nextion',false);}}\"",
+        optionData,
+        true,
+        ""
+    );
+
+    // Oled configurations
+    WebserverMemoryVariables::rowExtraClass = "data-sh='oled'";
+    WebserverMemoryVariables::sendFormCheckbox(
+        server,
+        FPSTR(DISPLAY_CONFIG_FORM2_ID),
+        globalDataController->getDisplaySettings()->invertDisplay,
+        FPSTR(DISPLAY_CONFIG_FORM2_LABEL),
+        true,
+        ""
+    );
+
+    // Nextion configutations
+    WebserverMemoryVariables::rowExtraClass = "data-sh='nextion'";
+    WebserverMemoryVariables::sendFormCheckbox(
+        server,
+        FPSTR(DISPLAY_CONFIG_FORM3_ID),
+        globalDataController->getDisplaySettings()->showWeatherSensorSplited,
+        FPSTR(DISPLAY_CONFIG_FORM3_LABEL),
+        true,
+        ""
+    );
+
+    WebserverMemoryVariables::rowExtraClass = "data-sh='nextion'";
+    WebserverMemoryVariables::sendFormCheckbox(
+        server,
+        FPSTR(DISPLAY_CONFIG_FORM4_ID),
+        globalDataController->getDisplaySettings()->automaticSwitchEnabled,
+        FPSTR(DISPLAY_CONFIG_FORM4_LABEL),
+        true,
+        ""
+    );
+
+    WebserverMemoryVariables::rowExtraClass = "data-sh='nextion'";
+    WebserverMemoryVariables::sendFormCheckbox(
+        server,
+        FPSTR(DISPLAY_CONFIG_FORM5_ID),
+        globalDataController->getDisplaySettings()->automaticSwitchActiveOnlyEnabled,
+        FPSTR(DISPLAY_CONFIG_FORM5_LABEL),
+        true,
+        ""
+    );
+
+    WebserverMemoryVariables::rowExtraClass = "data-sh='nextion'";
+    WebserverMemoryVariables::sendFormInput(
+        server,
+        FPSTR(DISPLAY_CONFIG_FORM6_ID),
+        FPSTR(DISPLAY_CONFIG_FORM6_LABEL),
+        String(globalDataController->getDisplaySettings()->automaticSwitchDelay/1000),
+        "",
+        120,
+        "onkeypress='return isNumberKey(event)'",
+        false,
+        true,
+        ""
+    );
+
+    WebserverMemoryVariables::rowExtraClass = "data-sh='nextion'";
+    WebserverMemoryVariables::sendFormInput(
+        server,
+        FPSTR(DISPLAY_CONFIG_FORM7_ID),
+        FPSTR(DISPLAY_CONFIG_FORM7_LABEL),
+        String(globalDataController->getDisplaySettings()->automaticInactiveOff),
+        "",
+        120,
+        "onkeypress='return isNumberKey(event)'",
+        false,
+        true,
+        ""
+    );
+
+    WebserverMemoryVariables::sendFormSubmitButton(server, true);
+    server->sendContent(FPSTR(DISPLAY_CONFIG_FORM_END));
+}
+
+/**
  * @brief Send out configuration for station
  * @param server                    Send out instancce
  * @param globalDataController      Access to global data
@@ -486,14 +592,6 @@ void WebserverMemoryVariables::sendStationConfigForm(ESP8266WebServer *server, G
         FPSTR(STATION_CONFIG_FORM2_ID),
         globalDataController->getClockSettings()->is24h,
         FPSTR(STATION_CONFIG_FORM2_LABEL),
-        true,
-        ""
-    );
-    WebserverMemoryVariables::sendFormCheckbox(
-        server,
-        FPSTR(STATION_CONFIG_FORM3_ID),
-        globalDataController->getSystemSettings()->invertDisplay,
-        FPSTR(STATION_CONFIG_FORM3_LABEL),
         true,
         ""
     );

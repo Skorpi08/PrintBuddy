@@ -9,7 +9,7 @@
 /**
  * Basic software settings
  */
-#define VERSION                     "1.0"
+#define VERSION                     "1.0 RC1"
 #define HOSTNAME                    "PrintBuddy-" 
 #define CONFIG                      "/conf.txt"         // EEProm config file for general settings
 #define PRINTERCONFIG               "/pconf.txt"        // EEProm config file for printer settings
@@ -86,35 +86,21 @@
 //======================== Display default config ===========================
 //===========================================================================
 
-
-
 // Display Settings
-//#define USE_NEXTION_DISPLAY
-#ifdef USE_NEXTION_DISPLAY
-    #ifdef USE_ESP8266_NODEMCU
-        #define DISPLAY_TX_PIN                  5
-        #define DISPLAY_RX_PIN                  4
-    #else
-        #define DISPLAY_TX_PIN                  D1
-        #define DISPLAY_RX_PIN                  D2
-    #endif
-    #define DISPLAY_BAUDRATE                    9600
+#ifdef USE_ESP8266_NODEMCU
+    #define DISPLAY_TX_PIN                  2
+    #define DISPLAY_RX_PIN                  10
 #else
-    // I2C Address of your Display (usually 0x3c or 0x3d)
-    #define DISPLAY_I2C_DISPLAY_ADDRESS         0x3c
-    #ifdef USE_ESP8266_NODEMCU
-        #define DISPLAY_SDA_PIN                 4
-        #define DISPLAY_SCL_PIN                 5
-    #else
-        #define DISPLAY_SDA_PIN                 D1
-        #define DISPLAY_SCL_PIN                 D2
-    #endif
-  
-    // true = pins at top | false = pins at the bottom
-    #define DISPLAY_INVERT_DISPLAY              true
-    // true = to use the SH1106 display | false = SSD1306 is used by default and is most common
-    #define DISPLAY_SH1106                      true
+    #define DISPLAY_TX_PIN                  SD2
+    #define DISPLAY_RX_PIN                  SD3
 #endif
+#define DISPLAY_BAUDRATE                    9600
+
+// I2C Address of your Display (usually 0x3c or 0x3d)
+#define DISPLAY_I2C_DISPLAY_ADDRESS         0x3c
+#define DISPLAY_SDA_PIN                     I2C_SDA_PIN
+#define DISPLAY_SCL_PIN                     I2C_SCL_PIN
+#define DISPLAY_INVERT_DISPLAY              true        // true = pins at top | false = pins at the bottom
 
 //===========================================================================
 //======================= Webserver default config ==========================
@@ -170,10 +156,6 @@
 #define ENABLE_OTA          true
 // Set an OTA password here -- leave blank if you don't want to be prompted for password
 #define OTA_Password        ""
-
-
-
-
 
 //===========================================================================
 //=============================== DEBUG =====================================

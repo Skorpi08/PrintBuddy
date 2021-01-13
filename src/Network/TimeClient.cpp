@@ -83,11 +83,18 @@ void TimeClient::setUtcOffset(float utcOffset) {
 	myUtcOffset = utcOffset;
 }
 
+int TimeClient::getHoursNumber() {
+    if (localEpoc == 0) {
+      return 0;
+    }
+    return ((getCurrentEpochWithUtcOffset()  % 86400L) / 3600) % 24;
+}
+
 String TimeClient::getHours() {
     if (localEpoc == 0) {
       return "--";
     }
-    int hours = ((getCurrentEpochWithUtcOffset()  % 86400L) / 3600) % 24;
+    int hours = this->getHoursNumber();
     if (hours < 10) {
       return "0" + String(hours);
     }
@@ -106,7 +113,7 @@ String TimeClient::getMinutes() {
     if (localEpoc == 0) {
       return "--";
     }
-    int minutes = ((getCurrentEpochWithUtcOffset() % 3600) / 60);
+    int minutes = this->getMinutesNumber();
     if (minutes < 10 ) {
       // In the first 10 minutes of each hour, we'll want a leading '0'
       return "0" + String(minutes);
@@ -125,7 +132,7 @@ String TimeClient::getSeconds() {
     if (localEpoc == 0) {
       return "--";
     }
-    int seconds = getCurrentEpochWithUtcOffset() % 60;
+    int seconds = this->getSecondsNumber();
     if ( seconds < 10 ) {
       // In the first 10 seconds of each minute, we'll want a leading '0'
       return "0" + String(seconds);

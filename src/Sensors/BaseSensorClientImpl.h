@@ -27,6 +27,7 @@ public:
     boolean hasGasSensor() { return false; };
     boolean hasAltitude() { return false; };
     String airQualityAsString(SensorDataStruct *sensorData) { return ""; };
+    int airQualityAsInt(SensorDataStruct *sensorData) { return 0; };
 
     String getTemperatureRounded(SensorDataStruct *sensorData) { return roundValue(sensorData->temperature); };
     String getHumidityRounded(SensorDataStruct *sensorData) { return roundValue(sensorData->humidity); };

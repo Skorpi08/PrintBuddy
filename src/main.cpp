@@ -3,6 +3,7 @@
 
 String lastMinute = "xx";
 String lastSecond = "xx";
+bool isFirstLoop = true;
 
 void configModeCallback(WiFiManager *myWiFiManager);
 void handleSubroutineLoop();
@@ -37,12 +38,15 @@ void setup() {
     globalDataController.registerSensorClient(SENSOR_CLIENT_DHT22_WIRE, &sensorClient8, i2cInterface, &SPI, SPI_CS, ON_WIRE_PIN);
 
     // Init all instances (Displays)
-    globalDataController.setDisplayClient(&displayClient);
+    globalDataController.registerDisplayClient(DISPLAY_CLIENT_NEXTION_4832K035, &displayClient1);
+    globalDataController.registerDisplayClient(DISPLAY_CLIENT_OLED_SH1106, &displayClient2);
+    globalDataController.registerDisplayClient(DISPLAY_CLIENT_OLED_SSD1306, &displayClient3);
 
     // Init 
     globalDataController.setup();
-    displayClient.preSetup();
-    displayClient.showBootScreen();
+    globalDataController.getDisplayClient()->preSetup();
+    globalDataController.getDisplayClient()->showBootScreen();
+    delay(5000);
 
     // WiFiManager - Local intialization. Once its business is done, there is no need to keep it around
     WiFiManager wifiManager;
@@ -59,7 +63,7 @@ void setup() {
         delay(5000);
     }
     
-    displayClient.postSetup(false);
+    globalDataController.getDisplayClient()->postSetup(false);
 
     // print the received signal strength:
     debugController.print("Signal Strength (RSSI): ");
@@ -96,9 +100,9 @@ void setup() {
 
 #if WEBSERVER_ENABLED
     webServer.setup();
-    displayClient.showWebserverSplashScreen(true);
+    globalDataController.getDisplayClient()->showWebserverSplashScreen(true);
 #else
-    displayClient.showWebserverSplashScreen(false);
+    globalDataController.getDisplayClient()->showWebserverSplashScreen(false);
 #endif
 
     globalDataController.flashLED(5, 100);
@@ -110,7 +114,7 @@ void setup() {
  * @brief Loop trough all
  */
 void loop() {
-    if (displayClient.isInTransitionMode()) {
+    if (globalDataController.getDisplayClient()->isInTransitionMode()) {
         handleSubroutineLoop();
         return;
     }
@@ -132,6 +136,13 @@ void loop() {
         debugController.printLn("Sync sensor...");
         globalDataController.getSensorSettings()->lastSyncEpoch = timeClient.getCurrentEpoch();
         globalDataController.syncSensor();
+        handleSubroutineLoop();
+    }
+
+    // We have weather and time, show something on display
+    if (isFirstLoop) {
+        globalDataController.getDisplayClient()->firstLoopCompleted();
+        isFirstLoop = false;
         handleSubroutineLoop();
     }
 
@@ -165,7 +176,7 @@ void loop() {
  */
 void handleSubroutineLoop() {
     // Handle Display
-    displayClient.handleUpdate();
+    globalDataController.syncDisplay();
 
     // Handle all Web stuff
     if (WEBSERVER_ENABLED) {
@@ -183,7 +194,7 @@ void handleSubroutineLoop() {
 void configModeCallback(WiFiManager *myWiFiManager) {
     debugController.printLn("Entered config mode");
     debugController.printLn(WiFi.softAPIP().toString());
-    displayClient.showApAccessScreen(myWiFiManager->getConfigPortalSSID(), WiFi.softAPIP().toString());
+    displayClient1.showApAccessScreen(myWiFiManager->getConfigPortalSSID(), WiFi.softAPIP().toString());
     debugController.printLn("Wifi Manager");
     debugController.printLn("Please connect to AP");
     debugController.printLn(myWiFiManager->getConfigPortalSSID());

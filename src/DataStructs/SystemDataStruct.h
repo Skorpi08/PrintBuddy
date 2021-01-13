@@ -5,7 +5,6 @@
 
 typedef struct {
     bool    useLedFlash;
-    bool    invertDisplay;
     int     webserverPort;
     String  webserverUsername;
     String  webserverPassword;

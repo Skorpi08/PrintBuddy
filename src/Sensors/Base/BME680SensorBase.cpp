@@ -176,3 +176,19 @@ String BME680SensorBase::airQualityAsString(SensorDataStruct *sensorData) {
     else if (score >=  51 && score <= 150 ) return "Moderate";
     return "Good";
 }
+
+/**
+ * @brief Return air qualitiy as integer
+ * @param sensorData            Handle to sensor data struct
+ * @return int 
+ */
+int BME680SensorBase::airQualityAsInt(SensorDataStruct *sensorData) {
+    float score = this->calculateIAQScore(sensorData);
+    score = (100-score)*5;
+    if      (score >= 301)                  return 6;
+    else if (score >= 201 && score <= 300 ) return 5;
+    else if (score >= 176 && score <= 200 ) return 4;
+    else if (score >= 151 && score <= 175 ) return 3;
+    else if (score >=  51 && score <= 150 ) return 2;
+    return 1;
+}

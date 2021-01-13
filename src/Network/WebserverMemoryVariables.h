@@ -79,6 +79,10 @@ static const char MENUE_ITEMS[] PROGMEM =
         "Configure Station"
         "<svg focusable='false' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='16' height='16' viewBox='0 0 32 32' aria-hidden='true'><path d='M27,16.76c0-.25,0-.5,0-.76s0-.51,0-.77l1.92-1.68A2,2,0,0,0,29.3,11L26.94,7a2,2,0,0,0-1.73-1,2,2,0,0,0-.64.1l-2.43.82a11.35,11.35,0,0,0-1.31-.75l-.51-2.52a2,2,0,0,0-2-1.61H13.64a2,2,0,0,0-2,1.61l-.51,2.52a11.48,11.48,0,0,0-1.32.75L7.43,6.06A2,2,0,0,0,6.79,6,2,2,0,0,0,5.06,7L2.7,11a2,2,0,0,0,.41,2.51L5,15.24c0,.25,0,.5,0,.76s0,.51,0,.77L3.11,18.45A2,2,0,0,0,2.7,21L5.06,25a2,2,0,0,0,1.73,1,2,2,0,0,0,.64-.1l2.43-.82a11.35,11.35,0,0,0,1.31.75l.51,2.52a2,2,0,0,0,2,1.61h4.72a2,2,0,0,0,2-1.61l.51-2.52a11.48,11.48,0,0,0,1.32-.75l2.42.82a2,2,0,0,0,.64.1,2,2,0,0,0,1.73-1L29.3,21a2,2,0,0,0-.41-2.51ZM25.21,24l-3.43-1.16a8.86,8.86,0,0,1-2.71,1.57L18.36,28H13.64l-.71-3.55a9.36,9.36,0,0,1-2.7-1.57L6.79,24,4.43,20l2.72-2.4a8.9,8.9,0,0,1,0-3.13L4.43,12,6.79,8l3.43,1.16a8.86,8.86,0,0,1,2.71-1.57L13.64,4h4.72l.71,3.55a9.36,9.36,0,0,1,2.7,1.57L25.21,8,27.57,12l-2.72,2.4a8.9,8.9,0,0,1,0,3.13L27.57,20Z'></path><path d='M16,22a6,6,0,1,1,6-6A5.94,5.94,0,0,1,16,22Zm0-10a3.91,3.91,0,0,0-4,4,3.91,3.91,0,0,0,4,4,3.91,3.91,0,0,0,4-4A3.91,3.91,0,0,0,16,12Z'></path></svg>"
     "</a></li>"
+    "<li class='cv-switcher-item bx--switcher__item'><a class='cv-switcher-item-link bx--switcher__item-link menitem' href='/configuredisplay/show'>"
+        "Configure Display"
+        "<svg focusable='false' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='16' height='16' viewBox='0 0 32 32' aria-hidden='true'><path d='M28,4H4A2,2,0,0,0,2,6V22a2,2,0,0,0,2,2h8v4H8v2H24V28H20V24h8a2,2,0,0,0,2-2V6A2,2,0,0,0,28,4ZM18,28H14V24h4Zm10-6H4V6H28Z'/></svg>"
+    "</a></li>"
     "<li class='cv-switcher-item bx--switcher__item'><a class='cv-switcher-item-link bx--switcher__item-link menitem' href='/configureweather/show'>"
         "Configure Weather"
         "<svg focusable='false' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='16' height='16' viewBox='0 0 32 32' aria-hidden='true'><path d='M24.8008,11.1382a8.9938,8.9938,0,0,0-17.6006,0A6.533,6.533,0,0,0,2,17.5H2V19a1,1,0,0,0,1,1H15a1,1,0,0,0,0-2H4v-.4966H4a4.5176,4.5176,0,0,1,4.144-4.4819l.8155-.064.0991-.812a6.9936,6.9936,0,0,1,13.8838,0l.0986.812.8154.064A4.4962,4.4962,0,0,1,23.5,22H7a1,1,0,0,0,0,2H23.5a6.4963,6.4963,0,0,0,1.3008-12.8618Z'></path><rect width='18' height='2' x='2' y='26' rx='1'></rect></svg>"
@@ -121,6 +125,7 @@ static const char HEADER_BLOCK2[] PROGMEM = "<link rel='stylesheet' href='https:
         "<script src='https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.32/moment-timezone-with-data.js' crossorigin='anonymous'></script>"
         "<style>.hidden{display:none} .bx--form-item{margin-bottom:20px} .bx--table-column-menu{width: 3.25rem} .menitem{padding:6px 1rem;font-size:.875rem;font-weight:600;line-height:1.29;letter-spacing:.16px;display:flex;justify-content:space-between;text-decoration:none;color:#c6c6c6} .pStateBar{width:100%;background-color:#ddd;margin:5px 0} .pStateBarD{height:20px;background-color:#24a148;text-align:center!important;font-size:13px!important;color:#ffffff;padding:4px 0} .pStateHr{border-top:1px solid #0043ce;margin: 5px 0}</style>"
         "<script>function showhide(a,b) {var e=$(\"[data-sh='\"+b+\"']\");var f=$(\"#\" + a);if (f.checked||f.prop('checked')){e.removeClass('hidden');}else{e.addClass('hidden');}}</script>"
+        "<script>function showhideDir(a,b) {var e=$(\"[data-sh='\"+a+\"']\");var f=$(\"#\" + a);if (b){e.removeClass('hidden');}else{e.addClass('hidden');}}</script>"
         "<script>function openModal(refelementId){document.body.classList.add(\"bx--body--with-modal-open\");document.getElementById(refelementId).classList.add(\"is-visible\")} function closeModal(refelementId){document.getElementById(refelementId).classList.remove(\"is-visible\");document.body.classList.remove(\"bx--body--with-modal-open\")}</script>"
         "<script>function isNumberKey(e){var h=e.which?e.which:event.keyCode;return!(h>31&&(h<48||h>57))}</script>"
         "<script>function openUrl(e){window.location.assign(e)}</script>"
@@ -318,9 +323,6 @@ static const char STATION_CONFIG_FORM1_LABEL[] PROGMEM = "Display Clock when pri
 static const char STATION_CONFIG_FORM2_ID[] PROGMEM = "is24hour";
 static const char STATION_CONFIG_FORM2_LABEL[] PROGMEM = "Use 24 Hour Clock (military time)";
 
-static const char STATION_CONFIG_FORM3_ID[] PROGMEM = "invDisp";
-static const char STATION_CONFIG_FORM3_LABEL[] PROGMEM = "Flip display orientation";
-
 static const char STATION_CONFIG_FORM4_ID[] PROGMEM = "useFlash";
 static const char STATION_CONFIG_FORM4_LABEL[] PROGMEM = "Flash System LED on Service Call";
 
@@ -516,6 +518,35 @@ static const char SENSOR_CONFIG_FORM3_LABEL[] PROGMEM = "Sensor type";
 static const char SENSOR_CONFIG_FORM_END[] PROGMEM = "</form>";
 
 /**
+ * Controls for display configuration
+ */
+static const char DISPLAY_CONFIG_FORM_START[] PROGMEM = "<form action='/configuredisplay/update' method='get'>";
+
+static const char DISPLAY_CONFIG_FORM1_ID[] PROGMEM = "d-type";
+static const char DISPLAY_CONFIG_FORM1_LABEL[] PROGMEM = "Display type";
+
+static const char DISPLAY_CONFIG_FORM2_ID[] PROGMEM = "invDisp";
+static const char DISPLAY_CONFIG_FORM2_LABEL[] PROGMEM = "Flip display orientation";
+
+static const char DISPLAY_CONFIG_FORM3_ID[] PROGMEM = "splitWeather";
+static const char DISPLAY_CONFIG_FORM3_LABEL[] PROGMEM = "Show weather and sensor on separate pages";
+
+static const char DISPLAY_CONFIG_FORM4_ID[] PROGMEM = "automaticSwitchEnable";
+static const char DISPLAY_CONFIG_FORM4_LABEL[] PROGMEM = "Scroll between printers (can be also controlled via display)";
+
+static const char DISPLAY_CONFIG_FORM5_ID[] PROGMEM = "automaticSwitchActivEnable";
+static const char DISPLAY_CONFIG_FORM5_LABEL[] PROGMEM = "Automatic switch to printers when at least one printer goes into printing state";
+
+static const char DISPLAY_CONFIG_FORM6_ID[] PROGMEM = "automaticSwitchDelay";
+static const char DISPLAY_CONFIG_FORM6_LABEL[] PROGMEM = "Delay in seconds when scrolling enabled";
+
+static const char DISPLAY_CONFIG_FORM7_ID[] PROGMEM = "automaticOff";
+static const char DISPLAY_CONFIG_FORM7_LABEL[] PROGMEM = "Delay in seconds when display should go off (with touch wakeup) when no printer is printing (0 = always on)";
+
+static const char DISPLAY_CONFIG_FORM_END[] PROGMEM = "</form>"
+    "<script>var e=document.getElementById('d-type');var val=e.value;if(val==0){showhideDir('oled',false);showhideDir('nextion',true);}else{showhideDir('oled',true);showhideDir('nextion',false);}</script>";
+
+/**
  * Controls for main page
  */
 static const char MAINPAGE_ROW_WEATHER_AND_SENSOR_START[] PROGMEM = "<div class='bx--col bx--col--auto'>"
@@ -619,6 +650,7 @@ public:
     static void sendStationConfigForm(ESP8266WebServer *server, GlobalDataController *globalDataController);
     static void sendPrinterConfigForm(ESP8266WebServer *server, GlobalDataController *globalDataController);
     static void sendSensorConfigForm(ESP8266WebServer *server, GlobalDataController *globalDataController);
+    static void sendDisplayConfigForm(ESP8266WebServer *server, GlobalDataController *globalDataController);
 
 private:
     static void sendFormCheckbox(ESP8266WebServer *server, String formId, bool isChecked, String label, bool inRow, String uniqueId);

@@ -27,6 +27,7 @@ public:
     virtual boolean hasAirQuality() = 0;
     virtual boolean hasAltitude() = 0;
     virtual String airQualityAsString(SensorDataStruct *sensorData) = 0;
+    virtual int airQualityAsInt(SensorDataStruct *sensorData) = 0;
 
     virtual String getTemperatureRounded(SensorDataStruct *sensorData) = 0;
     virtual String getHumidityRounded(SensorDataStruct *sensorData) = 0;

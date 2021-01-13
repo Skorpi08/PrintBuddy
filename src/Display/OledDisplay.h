@@ -8,6 +8,9 @@
 #include "../../include/WeatherStationFonts.h"
 #include "BaseDisplayClient.h"
 
+/**
+ * @brief OLED 128x64 implementation
+ */
 class OledDisplay : public BaseDisplayClient {
 private:
     GlobalDataController *globalDataController;
@@ -28,19 +31,15 @@ private:
     int numPrintersPrinting = 0;
     int lastFixedFrame = -1;
     int baseFrameCnt = 0;
-
-
-
-    
-    
-    boolean isClockOn = false;
-    
+    boolean isClockOn = false;   
     OverlayCallback clockOverlay[1];
+    String typeName;
 
 public:
-    OledDisplay(OLEDDisplay *oledDisplay, GlobalDataController *globalDataController, DebugController *debugController);
+    OledDisplay(String typeName, OLEDDisplay *oledDisplay, GlobalDataController *globalDataController, DebugController *debugController);
     void preSetup();
     void postSetup(bool isConfigChange);
+    void firstLoopCompleted();
     void handleUpdate();
     void flipDisplayUpdate();
     void showBootScreen();
@@ -48,20 +47,18 @@ public:
     void showWebserverSplashScreen(bool isEnabled);
     bool isInTransitionMode();
 
-
     void checkDisplay();
     void enableDisplay(boolean enable);
     void drawClock(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
-    
-
     void drawRssi(OLEDDisplay *display);
-
-
     void drawPrinterState(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
     void drawWeatherOutdoor(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
     void drawWeatherIndoor(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
     void drawInformationHeaderOverlay(OLEDDisplay *display, OLEDDisplayUiState* state);
 
+    String getType() { return this->typeName; };
+    bool isUpdateable() { return false; };
+    void updateFirmware() {};
 private:
     void setupFramesForInactiveMode();
     void setupFramesForActiveMode();

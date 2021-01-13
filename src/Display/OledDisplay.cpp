@@ -1,13 +1,14 @@
 #include "OledDisplay.h"
 
-
 /**
  * @brief Construct a new Oled Display:: Oled Display object
+ * @param typeName 
  * @param oledDisplay 
  * @param globalDataController 
  * @param debugController 
  */
-OledDisplay::OledDisplay(OLEDDisplay *oledDisplay, GlobalDataController *globalDataController, DebugController *debugController) {
+OledDisplay::OledDisplay(String typeName, OLEDDisplay *oledDisplay, GlobalDataController *globalDataController, DebugController *debugController) {
+    this->typeName = typeName;
     this->globalDataController = globalDataController;
     this->debugController = debugController;
     this->oledDisplay = oledDisplay;
@@ -20,7 +21,7 @@ OledDisplay::OledDisplay(OLEDDisplay *oledDisplay, GlobalDataController *globalD
  */
 void OledDisplay::preSetup() {
     this->oledDisplay->init();
-    if (this->globalDataController->getSystemSettings()->invertDisplay) {
+    if (this->globalDataController->getDisplaySettings()->invertDisplay) {
         this->oledDisplay->flipScreenVertically(); // connections at top of OLED display
     }
     this->oledDisplay->clear();
@@ -46,7 +47,7 @@ void OledDisplay::postSetup(bool isConfigChange) {
         this->ui->disableAllIndicators();
         this->ui->enableAutoTransition();
 
-        if (this->globalDataController->getSystemSettings()->invertDisplay) {
+        if (this->globalDataController->getDisplaySettings()->invertDisplay) {
             this->oledDisplay->flipScreenVertically();
         }
     } else  {
@@ -137,6 +138,12 @@ bool OledDisplay::isInTransitionMode() {
 }
 
 /**
+ * @brief Handles page switch from loading to main when main loop ist one time completed
+ */
+void OledDisplay::firstLoopCompleted() {
+}
+
+/**
  * @brief Handle update screen
  */
 void OledDisplay::handleUpdate() {
@@ -149,7 +156,7 @@ void OledDisplay::handleUpdate() {
  */
 void OledDisplay::flipDisplayUpdate() {
     this->ui->init();
-    if (this->globalDataController->getSystemSettings()->invertDisplay) {
+    if (this->globalDataController->getDisplaySettings()->invertDisplay) {
         this->oledDisplay->flipScreenVertically(); // connections at top of OLED display
     }
     this->ui->update();
@@ -217,8 +224,6 @@ void OledDisplay::showWebserverSplashScreen(bool isEnabled) {
  * @brief Switching between states 
  */
 void OledDisplay::checkDisplay() {
-    //BasePrinterClient *printerClient = this->globalDataController->getPrinterClient();
-
     if (!this->displayOn && this->globalDataController->getClockSettings()->show) {
         this->enableDisplay(true);
     }

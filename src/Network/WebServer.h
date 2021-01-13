@@ -37,5 +37,7 @@ public:
     void handleUpdateWeather();
     void handleConfigureSensor();
     void handleUpdateSensor();
+    void handleConfigureDisplay();
+    void handleUpdateDisplay();
     void handleUpdatePage();
 };

@@ -31,6 +31,7 @@ public:
     boolean hasAirQuality() override;
     boolean hasAltitude() override;
     String airQualityAsString(SensorDataStruct *sensorData) override;
+    int airQualityAsInt(SensorDataStruct *sensorData) override;
 
 protected:
     float calculateIAQScore(SensorDataStruct *sensorData);

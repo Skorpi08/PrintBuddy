@@ -9,10 +9,10 @@ WebServer::WebServer(GlobalDataController *globalDataController, DebugController
 
 void WebServer::setup() {
     static WebServer* obj = this;
-
     this->server = new ESP8266WebServer(this->globalDataController->getSystemSettings()->webserverPort);
     this->serverUpdater = new ESP8266HTTPUpdateServer();
 
+    // Web routes
     this->server->on("/", []() { obj->handleMainPage(); });
     this->server->on("/systemreset", []() { obj->handleSystemReset(); });
     this->server->on("/forgetwifi", []() { obj->handleWifiReset(); });
@@ -25,6 +25,8 @@ void WebServer::setup() {
     this->server->on("/configureweather/update", []() { obj->handleUpdateWeather(); });
     this->server->on("/configuresensor/show", []() { obj->handleConfigureSensor(); });
     this->server->on("/configuresensor/update", []() { obj->handleUpdateSensor(); });
+    this->server->on("/configuredisplay/show", []() { obj->handleConfigureDisplay(); });
+    this->server->on("/configuredisplay/update", []() { obj->handleUpdateDisplay(); });
     this->server->on("/update", HTTP_GET, []() { obj->handleUpdatePage(); });
 
     this->server->onNotFound([]() { obj->redirectHome(); });
@@ -258,7 +260,6 @@ void WebServer::handleUpdateStation() {
     }
     SystemDataStruct *systemSettings = this->globalDataController->getSystemSettings();
     ClockDataStruct *clockSettings = this->globalDataController->getClockSettings();
-    boolean flipOld = systemSettings->invertDisplay;
 
     clockSettings->show = this->server->hasArg("isClockEnabled");
     clockSettings->is24h = this->server->hasArg("is24hour");
@@ -267,7 +268,6 @@ void WebServer::handleUpdateStation() {
     clockSettings->timezoneHash = utcDataOffset.substring(utcDataOffset.indexOf("|") + 1);
     systemSettings->clockWeatherResyncMinutes = this->server->arg("refresh").toInt();
     systemSettings->hasBasicAuth = this->server->hasArg("isBasicAuth");
-    systemSettings->invertDisplay = this->server->hasArg("invDisp");
     systemSettings->useLedFlash = this->server->hasArg("useFlash");
     systemSettings->webserverPassword = this->server->arg("stationpassword");
     systemSettings->webserverUsername = this->server->arg("userid");
@@ -276,10 +276,6 @@ void WebServer::handleUpdateStation() {
     this->globalDataController->getTimeClient()->resetLastEpoch();
     this->globalDataController->getDisplayClient()->postSetup(true);
     this->findMDNS();
-
-    if (systemSettings->invertDisplay != flipOld) {
-        this->globalDataController->getDisplayClient()->flipDisplayUpdate();
-    }
     
     this->globalDataController->getSystemSettings()->lastOk = FPSTR(OK_MESSAGES_SAVE3);
     this->redirectHome();
@@ -317,6 +313,51 @@ void WebServer::handleUpdateWeather() {
     this->globalDataController->getWeatherClient()->setMetric(weatherSettings->isMetric);
     this->globalDataController->getWeatherClient()->updateCityId(weatherSettings->cityId);
     this->globalDataController->getSystemSettings()->lastOk = FPSTR(OK_MESSAGES_SAVE2);
+    this->redirectHome();
+}
+
+/**
+ * @brief Send display configuration page to client
+ */
+void WebServer::handleConfigureDisplay() {
+    if (!this->authentication()) {
+        return this->server->requestAuthentication();
+    }
+    WebserverMemoryVariables::sendHeader(this->server, this->globalDataController, "Configure", "Display");
+    WebserverMemoryVariables::sendDisplayConfigForm(this->server, this->globalDataController);
+    WebserverMemoryVariables::sendFooter(this->server, this->globalDataController);
+}
+
+/**
+ * @brief Update configuration for weather
+ */
+void WebServer::handleUpdateDisplay() {
+    if (!this->authentication()) {
+        return this->server->requestAuthentication();
+    }
+
+    DisplayDataStruct *displaySettings = this->globalDataController->getDisplaySettings();
+    boolean flipOld = displaySettings->invertDisplay;
+
+    int oldType = displaySettings->displayType;
+    displaySettings->displayType = this->server->arg("d-type").toInt();
+    displaySettings->invertDisplay = this->server->hasArg("invDisp");
+    displaySettings->showWeatherSensorSplited = this->server->hasArg("splitWeather");
+    displaySettings->automaticSwitchEnabled = this->server->hasArg("automaticSwitchEnable");
+    displaySettings->automaticSwitchActiveOnlyEnabled = this->server->hasArg("automaticSwitchActivEnable");
+    displaySettings->automaticSwitchDelay = this->server->arg("automaticSwitchDelay").toInt() * 1000;
+    displaySettings->automaticInactiveOff = this->server->arg("automaticOff").toInt();
+    this->globalDataController->writeSettings();
+
+    if (displaySettings->invertDisplay != flipOld) {
+        this->globalDataController->getDisplayClient()->flipDisplayUpdate();
+    }
+    this->globalDataController->getDisplayClient()->postSetup(true);
+    if (oldType == displaySettings->displayType) {
+        this->globalDataController->getSystemSettings()->lastOk = FPSTR(OK_MESSAGES_SAVE5);
+    } else {
+        this->globalDataController->getSystemSettings()->lastOk = FPSTR(OK_MESSAGES_SAVE6);
+    }
     this->redirectHome();
 }
 
