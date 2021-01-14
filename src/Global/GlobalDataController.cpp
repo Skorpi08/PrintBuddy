@@ -529,6 +529,16 @@ void GlobalDataController::syncDisplay() {
 }
 
 /**
+ * @brief Reinitialize the display client
+ */
+void GlobalDataController::reinitDisplay() {
+    this->getDisplayClient()->preSetup();
+    this->getDisplayClient()->showBootScreen();
+	this->getDisplayClient()->postSetup(false);
+    this->getDisplayClient()->firstLoopCompleted();
+}
+
+/**
  * @brief Return configuration for display
  * @return DisplayDataStruct* 
  */

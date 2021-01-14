@@ -76,6 +76,7 @@ public:
     void registerDisplayClient(int id, BaseDisplayClient *baseDisplayClient);
     BaseDisplayClient** getRegisteredDisplayClients();
     int getRegisteredDisplayClientsNum();
+    void reinitDisplay();
     void syncDisplay();
     BaseDisplayClient *getDisplayClient();
 

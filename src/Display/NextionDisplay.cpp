@@ -36,15 +36,16 @@ void NextionDisplay::postSetup(bool isConfigChange) {
     this->nextionConnection.sendCommandValueInt("autoPrinterSwitchDelay", displaySettings->automaticSwitchDelay);
     this->nextionConnection.sendCommandValueInt("autoPrinterSwitchEnable", displaySettings->automaticSwitchEnabled ? 1 : 0);
     this->nextionConnection.sendCommandValueInt("autoPrinterSwitchActiveEnable", displaySettings->automaticSwitchActiveOnlyEnabled ? 1 : 0);
+    this->nextionConnection.sendCommandValueInt("thup", 1);
+    this->nextionConnection.sendCommandValueInt("hasWeather", 0);
+    this->nextionConnection.sendCommandValueInt("hasSensor", 0);
     if (isConfigChange) {
         if ((displaySettings->automaticInactiveOff > 0) && (this->lastActivePrinters == 0)) {
-            this->nextionConnection.sendCommandValueInt("thup", 1);
+            this->nextionConnection.sendCommandValueInt("sleep", 0);
             this->nextionConnection.sendCommandValueInt("thsp", displaySettings->automaticInactiveOff);
         } else {
             this->nextionConnection.sendCommandValueInt("sleep", 0);
-            this->nextionConnection.sendCommandValueInt("thup", 1);
             this->nextionConnection.sendCommandValueInt("thsp", 0);
-            this->nextionConnection.sendCommandValueInt("sleep", 0);
         }
     }
     if (this->globalDataController->getWeatherSettings()->show && this->globalDataController->getWeatherSettings()->cityId != 0) {
@@ -58,7 +59,8 @@ void NextionDisplay::postSetup(bool isConfigChange) {
         this->nextionConnection.sendCommandValueInt("hasSensor", 0);
     }
     if (isConfigChange) {
-        this->nextionConnection.resetDevice();
+        this->nextionConnection.switchToPage(0);
+        delay(1000);
         this->nextionConnection.switchToPage(4);
     }
 }
@@ -71,9 +73,17 @@ void NextionDisplay::firstLoopCompleted() {
     DisplayDataStruct *displaySettings = this->globalDataController->getDisplaySettings();
     if (displaySettings->automaticInactiveOff > 0) {
         this->lastActivePrinters = 0;
+        this->nextionConnection.sendCommandValueInt("sleep", 0);
         this->nextionConnection.sendCommandValueInt("thup", 1);
         this->nextionConnection.sendCommandValueInt("thsp", displaySettings->automaticInactiveOff);
     }
+    String webAddress = "http://" + WiFi.localIP().toString();
+    if (this->globalDataController->getSystemSettings()->webserverPort!= 80) {
+        webAddress += ":" + String(this->globalDataController->getSystemSettings()->webserverPort);
+    }
+    webAddress += "/";   
+    this->nextionConnection.sendCommandValueTxt("vars.WifiAp.txt", WiFi.SSID());
+    this->nextionConnection.sendCommandValueTxt("vars.WifiServer.txt", webAddress);
     this->handleUpdate();
 }
 
@@ -164,8 +174,9 @@ void NextionDisplay::syncStateData() {
  * @brief Syncronize weather data
  */
 void NextionDisplay::syncWeatherData() {
-    if (this->globalDataController->getWeatherSettings()->show && this->globalDataController->getWeatherSettings()->cityId != 0) {
+    if (this->globalDataController->getWeatherSettings()->cityId != 0) {
         OpenWeatherMapClient *weatherClient = this->globalDataController->getWeatherClient();
+        this->nextionConnection.sendCommandValueInt("hasWeather", 1);
         this->nextionConnection.sendCommandValueTxt("vars.EWeatherState.txt", weatherClient->getCondition(0));
         this->nextionConnection.sendCommandValueTxt("vars.EWeatherTemp.txt", weatherClient->getTempRounded(0) + " " + weatherClient->getTempSymbol());
         this->nextionConnection.sendCommandValueTxt("vars.EWeatherHumi.txt", weatherClient->getHumidityRounded(0) + " %");
@@ -174,7 +185,7 @@ void NextionDisplay::syncWeatherData() {
         this->nextionConnection.sendCommandValueTxt("vars.EWeatherLoc.txt", "Lat: " + weatherClient->getLat(0) + ", Lon: " + weatherClient->getLon(0));
         this->nextionConnection.sendCommandValueTxt("vars.EWeatherIcon.txt", this->getWeatherIconShortId());
     }
-    if (this->globalDataController->getSensorSettings()->showOnDisplay && this->globalDataController->getSensorSettings()->activated) {
+    if (this->globalDataController->getSensorSettings()->activated) {
         SensorDataStruct *sensorSettings = this->globalDataController->getSensorSettings();
         BaseSensorClient *sensorClient = this->globalDataController->getSensorClient(sensorSettings);
         this->nextionConnection.sendCommandValueInt("hasSensor", 1);
@@ -286,16 +297,14 @@ void NextionDisplay::syncPrintersData() {
             this->nextionConnection.switchToPage(7);
         }
         this->nextionConnection.sendCommandValueInt("sleep", 0);
-        this->nextionConnection.sendCommandValueInt("thup", 1);
         this->nextionConnection.sendCommandValueInt("thsp", 0);
-        this->nextionConnection.sendCommandValueInt("sleep", 0);
     } else if((this->lastActivePrinters > 0) && (this->globalDataController->numPrintersPrinting() == 0)) {
         this->lastActivePrinters = this->globalDataController->numPrintersPrinting();
         if (displaySettings->automaticSwitchEnabled) {
             this->nextionConnection.switchToPage(4);
         }
         if (displaySettings->automaticInactiveOff > 0) {
-            this->nextionConnection.sendCommandValueInt("thup", 1);
+            this->nextionConnection.sendCommandValueInt("sleep", 0);
             this->nextionConnection.sendCommandValueInt("thsp", displaySettings->automaticInactiveOff);
         }
     }

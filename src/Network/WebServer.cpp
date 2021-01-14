@@ -352,10 +352,12 @@ void WebServer::handleUpdateDisplay() {
     if (displaySettings->invertDisplay != flipOld) {
         this->globalDataController->getDisplayClient()->flipDisplayUpdate();
     }
-    this->globalDataController->getDisplayClient()->postSetup(true);
+    
     if (oldType == displaySettings->displayType) {
+        this->globalDataController->getDisplayClient()->postSetup(true);
         this->globalDataController->getSystemSettings()->lastOk = FPSTR(OK_MESSAGES_SAVE5);
     } else {
+        this->globalDataController->reinitDisplay();
         this->globalDataController->getSystemSettings()->lastOk = FPSTR(OK_MESSAGES_SAVE6);
     }
     this->redirectHome();

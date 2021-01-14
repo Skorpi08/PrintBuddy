@@ -541,7 +541,7 @@ static const char DISPLAY_CONFIG_FORM6_ID[] PROGMEM = "automaticSwitchDelay";
 static const char DISPLAY_CONFIG_FORM6_LABEL[] PROGMEM = "Delay in seconds when scrolling enabled";
 
 static const char DISPLAY_CONFIG_FORM7_ID[] PROGMEM = "automaticOff";
-static const char DISPLAY_CONFIG_FORM7_LABEL[] PROGMEM = "Delay in seconds when display should go off (with touch wakeup) when no printer is printing (0 = always on)";
+static const char DISPLAY_CONFIG_FORM7_LABEL[] PROGMEM = "Delay in seconds when display should switch off (with touch wakeup) when no printer is printing (0 = always on)";
 
 static const char DISPLAY_CONFIG_FORM_END[] PROGMEM = "</form>"
     "<script>var e=document.getElementById('d-type');var val=e.value;if(val==0){showhideDir('oled',false);showhideDir('nextion',true);}else{showhideDir('oled',true);showhideDir('nextion',false);}</script>";
