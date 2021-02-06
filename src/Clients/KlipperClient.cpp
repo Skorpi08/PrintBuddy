@@ -93,7 +93,7 @@ void KlipperClient::getPrinterJobResults(PrinterDataStruct *printerData) {
         String(printerData->remoteAddress),
         printerData->remotePort,
         String(printerData->encAuth),
-        "/printer/objects/query?heater_bed&extruder&display_status&toolhead&virtual_sdcard",
+        "/printer/objects/query?heater_bed&extruder&display_status&toolhead&virtual_sdcard&print_stats",
         "",
         true
     );
